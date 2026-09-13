@@ -1,0 +1,30 @@
+---
+import { siteConfig } from '../config/site.config.mjs';
+
+export interface Props {
+  slot?: 'header' | 'inContent' | 'sidebar' | 'footer';
+  label?: string;
+}
+const { slot = 'inContent', label } = Astro.props as Props;
+
+// Adsterra 接入：把 site.config.mjs 里的 ads.enabled 设为 true，并把对应 key 填上
+// 这里用占位结构，接广告时直接替换为 Adsterra 提供的 script 标签
+const enabled = siteConfig.ads.enabled;
+const keys = {
+  header: siteConfig.ads.headerBannerKey,
+  inContent: siteConfig.ads.inContentBannerKey,
+  sidebar: siteConfig.ads.sidebarBannerKey,
+  footer: siteConfig.ads.footerBannerKey,
+};
+const key = keys[slot];
+---
+{enabled && key ? (
+  <div class="ad-slot" data-ad-slot={slot}>
+    <!-- Replace this with Adsterra-provided banner script -->
+    <ins class="adsbyadsterra" data-key={key}></ins>
+  </div>
+) : (
+  <div class="ad-slot" aria-hidden="true">
+    <span>{label ?? `[Ad slot · ${slot}] — enable in site.config.mjs after registering Adsterra`}</span>
+  </div>
+)}

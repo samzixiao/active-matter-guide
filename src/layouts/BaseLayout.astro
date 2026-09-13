@@ -1,0 +1,81 @@
+---
+import '../styles/global.css';
+import { siteConfig, buildPalette } from '../config/site.config.mjs';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+const palette = buildPalette(siteConfig.theme.hue, siteConfig.theme.accentHue);
+
+export interface Props {
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  canonical?: string;
+  jsonLd?: object | object[];
+}
+
+const {
+  title,
+  description = siteConfig.siteDescription,
+  ogImage,
+  canonical,
+  jsonLd,
+} = Astro.props as Props;
+
+const pageTitle = title ? `${title} | ${siteConfig.siteName}` : siteConfig.siteName;
+const canonicalUrl = canonical ?? new URL(Astro.url.pathname, siteConfig.canonicalBase).toString();
+
+// 将调色板写为 CSS 变量，覆盖 :root 默认值
+const cssVars = Object.entries(palette)
+  .map(([k, v]) => `--${k.replace(/[A-Z]/g, (m) => '-' + m.toLowerCase())}: ${v};`)
+  .join(' ');
+---
+<!doctype html>
+<html lang="en" style={`${cssVars}`}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+
+    <!-- Favicon (data URI, no file needed) -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href={`data:image/svg+xml;utf8,${encodeURIComponent(
+        `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><linearGradient id='g' x1='0' x2='1' y1='0' y2='1'><stop offset='0' stop-color='hsl(${siteConfig.theme.hue},70%,40%)'/><stop offset='1' stop-color='hsl(${siteConfig.theme.accentHue},80%,60%)'/></linearGradient></defs><rect width='64' height='64' rx='14' fill='url(#g)'/><text x='50%' y='54%' text-anchor='middle' font-family='Inter,Arial' font-weight='800' font-size='34' fill='white'>${siteConfig.gameShortName.charAt(0).toUpperCase()}</text></svg>`
+      )}`}
+    />
+
+    {
+      jsonLd && (
+        <script
+          type="application/ld+json"
+          set:html={JSON.stringify(Array.isArray(jsonLd) ? jsonLd : [jsonLd])}
+        />
+      )
+    }
+  </head>
+  <body>
+    <Header />
+    <main>
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

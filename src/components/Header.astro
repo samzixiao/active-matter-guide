@@ -1,0 +1,27 @@
+---
+import { siteConfig } from '../config/site.config.mjs';
+
+const path = Astro.url.pathname.replace(/\/+$/, '') || '/';
+function isActive(href: string) {
+  if (href === '/') return path === '/';
+  return path === href || path.startsWith(href + '/');
+}
+---
+<header class="site-header">
+  <div class="container">
+    <a href="/" class="brand" aria-label={siteConfig.siteName}>
+      <span class="brand-mark" aria-hidden="true">{siteConfig.gameShortName.charAt(0).toUpperCase()}</span>
+      <span class="brand-text">
+        {siteConfig.siteName}
+        <small>{siteConfig.siteTagline}</small>
+      </span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      {siteConfig.nav.map((item) => (
+        <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
+          {item.label}
+        </a>
+      ))}
+    </nav>
+  </div>
+</header>

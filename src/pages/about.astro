@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../config/site.config.mjs';
+---
+<BaseLayout
+  title="About"
+  description={`About ${siteConfig.siteName} — who we are and how we write guides for ${siteConfig.gameName}.`}
+>
+  <section class="hero" style="padding:48px 0 24px;">
+    <div class="container">
+      <h1>About {siteConfig.siteName}</h1>
+      <p class="lede">
+        We publish first-session plans, extraction decisions, loadout tests, shelter notes, and
+        patch-aware explainers for {siteConfig.gameName}. Each page separates official facts from
+        editorial recommendations.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container prose">
+      <h2>What we cover</h2>
+      <p>
+        First raids, objectives, extraction routes, starter kits, weapons, shelter systems, and
+        official update notes for
+        {' '}<strong>{siteConfig.gameName}</strong>.
+      </p>
+
+      <h2>How we test</h2>
+      <p>
+        We check game facts against the official Steam listing, official site, and developer
+        announcements. Live-build observations are labeled with their build context and are
+        revisited after official patch notes.
+      </p>
+
+      <h2>How we make money</h2>
+      <p>
+        This site is supported by non-intrusive advertising. We never gate content behind a paywall
+        and we never promote anything we have not personally tested.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Found a typo or have a tip? Reach us at <a href="/contact">our contact page</a>.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,64 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import GuideCard from '../../components/GuideCard.astro';
+import AdSlot from '../../components/AdSlot.astro';
+
+import beginnerGuide from '../../content/guides/active-matter-beginner-guide.md?raw';
+import loadoutGuide from '../../content/guides/active-matter-loadout-guide.md?raw';
+import extractionGuide from '../../content/guides/active-matter-extraction-guide.md?raw';
+import shelterGuide from '../../content/guides/active-matter-shelter-guide.md?raw';
+import weaponsGuide from '../../content/guides/active-matter-weapons-guide.md?raw';
+import mapGuide from '../../content/guides/active-matter-map-guide.md?raw';
+import faqGuide from '../../content/guides/active-matter-faq-release-platforms.md?raw';
+import updateGuide from '../../content/guides/active-matter-update-0-4-0-78.md?raw';
+
+function parseFrontmatter(raw: string) {
+  const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!m) return { data: {}, body: raw, slug: '' };
+  const data: Record<string, string> = {};
+  m[1].split('\n').forEach((line) => {
+    const idx = line.indexOf(':');
+    if (idx < 0) return;
+    const key = line.slice(0, idx).trim();
+    let val: string = line.slice(idx + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+    data[key] = val;
+  });
+  const slug = (data.title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return { data, body: m[2], slug };
+}
+
+const guides = [beginnerGuide, loadoutGuide, extractionGuide, shelterGuide, weaponsGuide, mapGuide, faqGuide, updateGuide]
+  .map((raw) => parseFrontmatter(raw))
+  .sort((a, b) => ((a.data.date || '') > (b.data.date || '') ? -1 : 1));
+---
+<BaseLayout title="All Guides" description="Browse every beginner guide, extraction plan, shelter note, and patch explainer for Active Matter.">
+  <section class="hero" style="padding:48px 0 24px;">
+    <div class="container">
+      <h1>All guides</h1>
+      <p class="lede">Beginner routes, loadout tests, extraction decisions, shelter notes, and official update explainers — sorted by most recent.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="card-grid">
+        {guides.map((g) => (
+          <GuideCard
+            title={g.data.title}
+            description={g.data.description}
+            href={`/guides/${g.slug}`}
+            category={g.data.category}
+            date={g.data.date}
+            readingMinutes={parseInt(g.data.readingMinutes || '5', 10)}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <AdSlot slot="footer" />
+</BaseLayout>

@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AdSlot from '../components/AdSlot.astro';
+import { siteConfig } from '../config/site.config.mjs';
+
+const tiers = [
+  {
+    tier: 'S',
+    title: 'S-Tier — Protect the extraction',
+    desc: 'Decisions that preserve a completed objective, a usable kit, and a route home.',
+    color: 'var(--accent)',
+  },
+  {
+    tier: 'A',
+    title: 'A-Tier — Build a repeatable baseline',
+    desc: 'A controllable primary, matching ammunition, basic protection, and one recovery option.',
+    color: 'var(--primary)',
+  },
+  {
+    tier: 'B',
+    title: 'B-Tier — Add optional risk',
+    desc: 'Extra loot, utility, or PvP pressure that is useful only after the objective and exit are clear.',
+    color: 'color-mix(in srgb, var(--primary) 60%, var(--text-muted))',
+  },
+  {
+    tier: 'C',
+    title: 'C-Tier — Unverified assumptions',
+    desc: 'Old timings, untested weapon rankings, and routes that depend on a single lucky run.',
+    color: 'var(--text-muted)',
+  },
+];
+
+const chars = [
+  { name: 'Complete the chosen objective', tier: 'S', note: 'A clear objective is the first condition for a profitable extraction.' },
+  { name: 'Keep an extraction route and fallback', tier: 'S', note: 'A route you can explain under pressure is worth more than one extra container.' },
+  { name: 'Use a controllable baseline weapon', tier: 'A', note: 'Consistency makes weapon and route testing possible across patches.' },
+  { name: 'Reserve healing and matching ammunition', tier: 'A', note: 'The kit must support the objective and the trip home, not only the opening fight.' },
+  { name: 'Take optional loot after a reset', tier: 'B', note: 'Useful when the squad is together and the exit remains clear.' },
+  { name: 'Contest every visible enemy', tier: 'B', note: 'Sometimes valuable, often unnecessary; fight when it changes the raid.' },
+  { name: 'Copy an old “best gun” list', tier: 'C', note: 'Patch-sensitive claims need a build number and controlled runs.' },
+];
+---
+<BaseLayout
+  title={`${siteConfig.gameName} Tier List`}
+  description={`The current ${siteConfig.gameName} tier list — every character ranked after the latest patch.`}
+>
+  <section class="hero" style="padding:48px 0 24px;">
+    <div class="container">
+      <h1>{siteConfig.gameName} Tier List</h1>
+      <p class="lede">A patch-safe ranking of raid decisions for new players. Weapon and map rankings should be re-tested after official updates.</p>
+    </div>
+  </section>
+
+  <AdSlot slot="header" label="Header banner · 728x90" />
+
+  <section class="section">
+    <div class="container">
+      <div class="card-grid" style="margin-bottom:32px;">
+        {tiers.map((t) => (
+          <div class="card" style="padding:18px;">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+              <span style={`font-size:1.8rem;font-weight:800;color:${t.color};line-height:1;`}>{t.tier}</span>
+              <strong>{t.title}</strong>
+            </div>
+            <p style="margin:0;color:var(--text-muted);font-size:0.95rem;">{t.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <h2>Starter priorities</h2>
+      <div style="display:grid;gap:10px;">
+        {chars.map((c) => {
+          const t = tiers.find((x) => x.tier === c.tier)!;
+          return (
+            <div class="card" style="flex-direction:row;align-items:center;padding:14px 18px;gap:14px;">
+              <span style={`font-size:1.6rem;font-weight:800;color:${t.color};width:36px;text-align:center;`}>{c.tier}</span>
+              <div style="flex:1;">
+                <strong>{c.name}</strong>
+                <p style="margin:2px 0 0;color:var(--text-muted);font-size:0.92rem;">{c.note}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <AdSlot slot="footer" />
+</BaseLayout>

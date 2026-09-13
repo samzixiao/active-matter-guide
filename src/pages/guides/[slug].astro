@@ -1,0 +1,196 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import AdSlot from '../../components/AdSlot.astro';
+
+import beginnerGuide from '../../content/guides/active-matter-beginner-guide.md?raw';
+import loadoutGuide from '../../content/guides/active-matter-loadout-guide.md?raw';
+import extractionGuide from '../../content/guides/active-matter-extraction-guide.md?raw';
+import shelterGuide from '../../content/guides/active-matter-shelter-guide.md?raw';
+import weaponsGuide from '../../content/guides/active-matter-weapons-guide.md?raw';
+import mapGuide from '../../content/guides/active-matter-map-guide.md?raw';
+import faqGuide from '../../content/guides/active-matter-faq-release-platforms.md?raw';
+import updateGuide from '../../content/guides/active-matter-update-0-4-0-78.md?raw';
+
+function parseFrontmatter(raw: string) {
+  const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!m) return { data: {}, body: raw, slug: '' };
+  const data: Record<string, string> = {};
+  m[1].split('\n').forEach((line) => {
+    const idx = line.indexOf(':');
+    if (idx < 0) return;
+    const key = line.slice(0, idx).trim();
+    let val: string = line.slice(idx + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+    data[key] = val;
+  });
+  const slug = (data.title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return { data, body: m[2], slug };
+}
+
+const allGuides = [beginnerGuide, loadoutGuide, extractionGuide, shelterGuide, weaponsGuide, mapGuide, faqGuide, updateGuide].map((raw) => parseFrontmatter(raw));
+
+export function getStaticPaths() {
+  const sources = [beginnerGuide, loadoutGuide, extractionGuide, shelterGuide, weaponsGuide, mapGuide, faqGuide, updateGuide];
+  return sources.map((raw) => {
+    const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    const data: Record<string, string> = {};
+    if (m) {
+      m[1].split('\n').forEach((line) => {
+        const idx = line.indexOf(':');
+        if (idx < 0) return;
+        const key = line.slice(0, idx).trim();
+        let val: string = line.slice(idx + 1).trim();
+        if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+        data[key] = val;
+      });
+    }
+    const slug = (data.title || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return { params: { slug } };
+  });
+}
+
+const { slug } = Astro.params;
+const guide = allGuides.find((g) => g.slug === slug);
+
+if (!guide) {
+  return Astro.redirect('/guides');
+}
+
+const { data, body } = guide as {
+  data: { title: string; description: string; category: string; date: string; readingMinutes: string; keywords?: string };
+  body: string;
+};
+
+function renderMarkdown(md: string): string {
+  const escape = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const lines = md.split('\n');
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+
+    if (/^\|.+\|$/.test(line) && i + 1 < lines.length && /^\|[\s\-:|]+\|$/.test(lines[i + 1])) {
+      const head = line.slice(1, -1).split('|').map((c) => c.trim());
+      const rows: string[][] = [];
+      i += 2;
+      while (i < lines.length && /^\|.+\|$/.test(lines[i])) {
+        rows.push(lines[i].slice(1, -1).split('|').map((c) => c.trim()));
+        i++;
+      }
+      out.push('<table><thead><tr>' + head.map((h) => `<th>${inline(h)}</th>`).join('') + '</tr></thead><tbody>');
+      for (const r of rows) out.push('<tr>' + r.map((c) => `<td>${inline(c)}</td>`).join('') + '</tr>');
+      out.push('</tbody></table>');
+      continue;
+    }
+
+    const h = line.match(/^(#{1,4})\s+(.*)$/);
+    if (h) {
+      out.push(`<h${h[1].length}>${inline(h[2])}</h${h[1].length}>`);
+      i++;
+      continue;
+    }
+
+    if (line.startsWith('> ')) {
+      const quoteLines: string[] = [];
+      while (i < lines.length && lines[i].startsWith('> ')) {
+        quoteLines.push(lines[i].slice(2));
+        i++;
+      }
+      out.push(`<blockquote>${quoteLines.map(inline).join('<br/>')}</blockquote>`);
+      continue;
+    }
+
+    if (/^[-*]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-*]\s+/, ''));
+        i++;
+      }
+      out.push('<ul>' + items.map((it) => `<li>${inline(it)}</li>`).join('') + '</ul>');
+      continue;
+    }
+
+    if (line.trim() === '') {
+      i++;
+      continue;
+    }
+
+    const para: string[] = [line];
+    i++;
+    while (
+      i < lines.length &&
+      lines[i].trim() !== '' &&
+      !/^#{1,4}\s+/.test(lines[i]) &&
+      !/^[-*]\s+/.test(lines[i]) &&
+      !lines[i].startsWith('> ') &&
+      !/^\|.+\|$/.test(lines[i])
+    ) {
+      para.push(lines[i]);
+      i++;
+    }
+    out.push(`<p>${inline(para.join(' '))}</p>`);
+  }
+  function inline(s: string): string {
+    return escape(s)
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" rel="noopener noreferrer">$1</a>');
+  }
+  return out.join('\n');
+}
+
+const html = renderMarkdown(body);
+const formattedDate = new Date(data.date).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: data.title,
+  description: data.description,
+  datePublished: data.date,
+  dateModified: data.date,
+  author: { '@type': 'Organization', name: 'Active Matter Field Guide Team' },
+  publisher: { '@type': 'Organization', name: 'Active Matter Field Guide' },
+  articleSection: data.category,
+  keywords: Array.isArray(data.keywords) ? data.keywords.join(', ') : '',
+};
+---
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  jsonLd={jsonLd}
+>
+  <section class="section">
+    <div class="container">
+      <article class="prose">
+        <span class="tag">{data.category}</span>
+        <h1 style="margin-top:12px;">{data.title}</h1>
+        <p class="meta">
+          Published {formattedDate} · {data.readingMinutes} min read
+        </p>
+
+        <AdSlot slot="header" label="In-content banner · 728x90" />
+
+        <Fragment set:html={html} />
+
+        <AdSlot slot="footer" label="Footer banner · 728x90" />
+
+        <hr />
+        <p style="color:var(--text-muted);font-size:0.9rem;">
+          Want more builds and strategies? <a href="/guides">Browse all guides →</a>
+        </p>
+      </article>
+    </div>
+  </section>
+</BaseLayout>

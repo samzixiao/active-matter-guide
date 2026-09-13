@@ -1,0 +1,30 @@
+---
+export interface Props {
+  title: string;
+  description: string;
+  href: string;
+  category: string;
+  date: string;
+  readingMinutes: number;
+}
+const { title, description, href, category, date, readingMinutes } = Astro.props as Props;
+const formattedDate = new Date(date).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+<a class="card" href={href}>
+  <div class="card-cover" aria-hidden="true">
+    <span class="badge">{category}</span>
+  </div>
+  <div class="card-body">
+    <h3>{title}</h3>
+    <p>{description}</p>
+    <div class="card-meta">
+      <span>{formattedDate}</span>
+      <span>·</span>
+      <span>{readingMinutes} min read</span>
+    </div>
+  </div>
+</a>

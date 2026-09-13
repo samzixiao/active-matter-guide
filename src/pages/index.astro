@@ -1,0 +1,103 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import GuideCard from '../components/GuideCard.astro';
+import AdSlot from '../components/AdSlot.astro';
+import { siteConfig } from '../config/site.config.mjs';
+
+// 直接 import markdown 文章（结构最简单、无需 content collection）
+import beginnerGuide from '../content/guides/active-matter-beginner-guide.md?raw';
+import loadoutGuide from '../content/guides/active-matter-loadout-guide.md?raw';
+import extractionGuide from '../content/guides/active-matter-extraction-guide.md?raw';
+import shelterGuide from '../content/guides/active-matter-shelter-guide.md?raw';
+import weaponsGuide from '../content/guides/active-matter-weapons-guide.md?raw';
+import mapGuide from '../content/guides/active-matter-map-guide.md?raw';
+import faqGuide from '../content/guides/active-matter-faq-release-platforms.md?raw';
+import updateGuide from '../content/guides/active-matter-update-0-4-0-78.md?raw';
+
+// 极简 frontmatter 解析（避免引入额外依赖）
+function parseFrontmatter(raw: string) {
+  const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  if (!m) return { data: {}, body: raw };
+  const data: Record<string, string> = {};
+  m[1].split('\n').forEach((line) => {
+    const idx = line.indexOf(':');
+    if (idx < 0) return;
+    const key = line.slice(0, idx).trim();
+    let val: string = line.slice(idx + 1).trim();
+    if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1);
+    data[key] = val;
+  });
+  return { data, body: m[2] };
+}
+
+const guides = [beginnerGuide, loadoutGuide, extractionGuide, shelterGuide, weaponsGuide, mapGuide, faqGuide, updateGuide]
+  .map((raw) => parseFrontmatter(raw).data as {
+    title: string;
+    description: string;
+    category: string;
+    date: string;
+    readingMinutes: string;
+  })
+  .sort((a, b) => (a.date > b.date ? -1 : 1));
+
+const jsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: siteConfig.siteName,
+    url: siteConfig.canonicalBase,
+    description: siteConfig.siteDescription,
+    inLanguage: 'en',
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'VideoGame',
+    name: siteConfig.gameName,
+    genre: siteConfig.gameGenre,
+    gamePlatform: siteConfig.gamePlatforms.join(', '),
+    releaseDate: siteConfig.gameReleaseDate,
+    author: { '@type': 'Organization', name: siteConfig.gameDeveloper },
+    url: siteConfig.gameSteamUrl,
+  },
+];
+---
+<BaseLayout jsonLd={jsonLd}>
+  <section class="hero">
+    <div class="container">
+      <span class="tag">{siteConfig.gameGenre} · Updated {new Date().toLocaleDateString('en-US')}</span>
+      <h1 style="margin-top:14px;">{siteConfig.siteName}</h1>
+      <p class="lede">{siteConfig.siteDescription}</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/guides">Read the latest guides →</a>
+        <a class="btn btn-ghost" href={siteConfig.gameSteamUrl} rel="noopener noreferrer">
+          View on Steam ↗
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <AdSlot slot="header" label="Header banner · 728x90" />
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Latest guides</h2>
+        <a class="more" href="/guides">All guides →</a>
+      </div>
+      <div class="card-grid">
+        {guides.map((g) => (
+          <GuideCard
+            title={g.title}
+            description={g.description}
+            href={`/guides/${g.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}`}
+            category={g.category}
+            date={g.date}
+            readingMinutes={parseInt(g.readingMinutes || '5', 10)}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <AdSlot slot="footer" label="Footer banner · 728x90" />
+</BaseLayout>

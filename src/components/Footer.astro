@@ -1,0 +1,19 @@
+---
+import { siteConfig } from '../config/site.config.mjs';
+---
+<footer class="site-footer">
+  <div class="container">
+    <div>
+      <p>
+        &copy; {siteConfig.footer.copyrightYear} {siteConfig.siteName}. All rights reserved.
+      </p>
+      <p style="margin-top:6px;font-size:0.82rem;">{siteConfig.footer.disclaimer}</p>
+    </div>
+    <div class="footer-links">
+      <a href="/guides">Guides</a>
+      <a href="/about">About</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/contact">Contact</a>
+    </div>
+  </div>
+</footer>
